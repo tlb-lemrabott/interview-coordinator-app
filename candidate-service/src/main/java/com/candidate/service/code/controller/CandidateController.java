@@ -3,6 +3,7 @@ package com.candidate.service.code.controller;
 import com.candidate.service.code.dto.CandidateDTO;
 import com.candidate.service.code.model.Candidate;
 import com.candidate.service.code.service.CandidateService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class CandidateController {
     private final CandidateService candidateService;
 
     @PostMapping
-    public ResponseEntity<Candidate> registerCandidate(@RequestBody CandidateDTO candidateDTO) {
+    public ResponseEntity<Candidate> registerCandidate(@Valid @RequestBody CandidateDTO candidateDTO) {
         Candidate savedCandidate = candidateService.registerCandidate(candidateDTO);
         return new ResponseEntity<>(savedCandidate, HttpStatus.CREATED);
     }
