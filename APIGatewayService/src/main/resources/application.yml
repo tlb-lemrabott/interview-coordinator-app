@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: APIGatewayService
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: candidate-service
+          uri: lb://candidate-service
+          predicates:
+            - Path=/api/candidates/**
+        - id: interview-service
+          uri: lb://interview-service
+          predicates:
+            - Path=/api/interviews/**
+        - id: recruiter-service
+          uri: lb://recruiter-service
+          predicates:
+            - Path=/api/recruiters/**
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+logging:
+    level:
+      org.springframework.boot.context.config: DEBUG

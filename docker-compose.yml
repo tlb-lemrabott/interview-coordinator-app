@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: interview-coordinator-postgres
+    environment:
+      POSTGRES_DB: interview_coordinator
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - interview-network
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: interview-coordinator-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - interview-network
+
+  # Eureka Server
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: interview-coordinator-eureka
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - interview-network
+
+  # API Gateway Service
+  api-gateway:
+    build:
+      context: ./APIGatewayService
+      dockerfile: Dockerfile
+    container_name: interview-coordinator-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+    networks:
+      - interview-network
+
+  # Candidate Service
+  candidate-service:
+    build:
+      context: ./candidate-service
+      dockerfile: Dockerfile
+    container_name: interview-coordinator-candidate
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/candidate_db
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      - eureka-server
+      - postgres
+      - rabbitmq
+    networks:
+      - interview-network
+
+  # Recruiter Service
+  recruiter-service:
+    build:
+      context: ./recruiter-service
+      dockerfile: Dockerfile
+    container_name: interview-coordinator-recruiter
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/recruiter_db
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      - eureka-server
+      - postgres
+      - rabbitmq
+    networks:
+      - interview-network
+
+  # Interview Service
+  interview-service:
+    build:
+      context: ./interview-service
+      dockerfile: Dockerfile
+    container_name: interview-coordinator-interview
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/interview_db
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      - eureka-server
+      - postgres
+      - rabbitmq
+    networks:
+      - interview-network
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  interview-network:
+    driver: bridge
