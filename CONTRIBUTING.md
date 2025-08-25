@@ -226,5 +226,3 @@ We welcome contributions in the following areas:
 - **Performance**: Optimizing code and improving efficiency
 - **Security**: Identifying and fixing security vulnerabilities
 - **DevOps**: Improving deployment and CI/CD processes
-
-Thank you for contributing to the Interview Coordinator Application! 🚀
